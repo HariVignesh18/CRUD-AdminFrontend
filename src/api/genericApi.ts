@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
-const API_BASE_URL = 'http://localhost:5081';
+export const API_BASE_URL_CONSTANT = API_BASE_URL;
 
 export const genericApi = {
     getTables: async () => {

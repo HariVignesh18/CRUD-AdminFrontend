@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { genericApi } from '../api/genericApi';
+import { API_BASE_URL } from '../config/api';
 
 import '../styles/navbar.scss';
 
@@ -20,7 +21,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ setVisible }) => {
             .then(async (res) => {
                 // Instead of showing all database tables, show only configured ones
                 try {
-                    const configRes = await fetch('http://localhost:5081/api/table_configurations');
+                    const configRes = await fetch(`${API_BASE_URL}/api/table_configurations`);
                     const configData = await configRes.json();
                     if (configData.success && configData.data) {
                         setTables(configData.data);

@@ -8,6 +8,7 @@ import { Steps } from 'primereact/steps';
 import { genericApi } from '../api/genericApi';
 import { ToastContext } from '../context/ToastContext';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 interface ColumnMeta {
     name: string;
@@ -155,7 +156,7 @@ const GeneratePage: React.FC = () => {
     // Save configuration and navigate to table
     const saveConfiguration = async () => {
         try {
-            await axios.post('http://localhost:5081/api/table_configurations', {
+            await axios.post(`${API_BASE_URL}/api/table_configurations`, {
                 table_name: tableName,
                 column_order: columnOrder,
                 unique_constraints: uniqueConstraints,

@@ -17,8 +17,9 @@ import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 import './styles/app.scss';
+import { API_BASE_URL } from './config/api';
 
-const API_URL = "http://localhost:5081";
+const API_URL = API_BASE_URL;
 
 function App() {
     return (

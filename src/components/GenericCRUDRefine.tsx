@@ -4,6 +4,7 @@ import { useCreate, useUpdate, useDelete } from "@refinedev/core";
 import { Card } from 'primereact/card';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { genericApi } from '../api/genericApi';
+import { API_BASE_URL } from '../config/api';
 import { ToastContext } from '../context/ToastContext';
 import { DataTableWrapper } from '../shared';
 import GenericHeader from './generic/GenericHeader';
@@ -86,7 +87,7 @@ const GenericCRUDRefine: React.FC = () => {
 
     const loadTableConfig = async () => {
         try {
-            const res = await axios.get(`http://localhost:5081/api/table_configurations/${table}`);
+            const res = await axios.get(`${API_BASE_URL}/api/table_configurations/${table}`);
             if (res.data.success && res.data.data) {
                 setTableConfig(res.data.data);
             }
@@ -142,7 +143,8 @@ const GenericCRUDRefine: React.FC = () => {
 
                 // Build URL with query parameters
                 const queryString = new URLSearchParams(params as any).toString();
-                const url = `http://localhost:5081/api/${table}?${queryString}`;
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5081';
+                const url = `${apiUrl}/api/${table}?${queryString}`;
 
                 const response = await axios.get(url);
 
