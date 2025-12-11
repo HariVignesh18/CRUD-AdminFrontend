@@ -43,6 +43,7 @@ const GenericCRUDRefine: React.FC = () => {
     const [metadata, setMetadata] = useState<ColumnMeta[]>([]);
     const [primaryKey, setPrimaryKey] = useState('id');
     const [tableConfig, setTableConfig] = useState<TableConfig | null>(null);
+    const [configLoading, setConfigLoading] = useState(true); // Track if config is loading
 
     // Refine Mutations
     const { mutate: createMutate } = useCreate();
@@ -86,13 +87,19 @@ const GenericCRUDRefine: React.FC = () => {
     };
 
     const loadTableConfig = async () => {
+        setConfigLoading(true);
         try {
             const res = await axios.get(`${API_BASE_URL}/api/table_configurations/${table}`);
             if (res.data.success && res.data.data) {
                 setTableConfig(res.data.data);
+            } else {
+                setTableConfig(null); // No config exists
             }
         } catch (err: any) {
             // No custom configuration found, using defaults
+            setTableConfig(null);
+        } finally {
+            setConfigLoading(false);
         }
     };
 
@@ -110,6 +117,9 @@ const GenericCRUDRefine: React.FC = () => {
         setFilters({});
         setSearchQuery('');
         setVisibleColumns([]); // Reset visible columns when switching tables
+        setTableConfig(null); // Clear old table config to prevent race condition
+        setConfigLoading(true); // Mark config as loading
+        setMetadata([]); // Clear metadata to force re-initialization
     }, [table]);
 
     // Fetch data when filters/pagination/sort changes
@@ -274,41 +284,22 @@ const GenericCRUDRefine: React.FC = () => {
             return a.name.localeCompare(b.name);
         });
     })();
-
     // All available columns (excluding PK/auto-increment)
     const allAvailableColumns = sortedMetadata
         .filter(col => !col.isPrimaryKey && !col.isAutoIncrement);
 
-    // Initialize visible columns when metadata and config are loaded
+    // Initialize visible columns - always show ALL columns by default
     useEffect(() => {
-        // Only initialize if we have metadata and columns haven't been set yet
+        // Only initialize if we have metadata
         if (allAvailableColumns.length === 0) return;
 
-        // Wait for both metadata and potential config to load
-        // Reset columns when table changes (visibleColumns was cleared in table switch effect)
+        // Only initialize when visibleColumns are empty (after table switch or initial load)
         if (visibleColumns.length === 0) {
-            // Use column_order from tableConfig if available
-            if (tableConfig?.column_order && Array.isArray(tableConfig.column_order) && tableConfig.column_order.length > 0) {
-                // Filter column_order to only include columns that:
-                // 1. Exist in the current metadata
-                // 2. Are not filtered out (not PK, not auto-increment)
-                const orderedColumns = tableConfig.column_order.filter((colName: string) =>
-                    allAvailableColumns.some(col => col.name === colName)
-                );
-
-                if (orderedColumns.length > 0) {
-                    setVisibleColumns(orderedColumns);
-                } else {
-                    // Config exists but no valid columns, show all
-                    setVisibleColumns(allAvailableColumns.map(col => col.name));
-                }
-            } else {
-                // No configuration, show all available columns
-                setVisibleColumns(allAvailableColumns.map(col => col.name));
-            }
+            // Always show all available columns
+            setVisibleColumns(allAvailableColumns.map(col => col.name));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allAvailableColumns.length, tableConfig]);
+    }, [allAvailableColumns.length, table]); // Added table to force re-init on table change
 
     // Filter columns based on visibility selection
     const dataColumns = allAvailableColumns
