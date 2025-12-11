@@ -109,6 +109,7 @@ const GenericCRUDRefine: React.FC = () => {
         setPage(1);
         setFilters({});
         setSearchQuery('');
+        setVisibleColumns([]); // Reset visible columns when switching tables
     }, [table]);
 
     // Fetch data when filters/pagination/sort changes
@@ -278,13 +279,36 @@ const GenericCRUDRefine: React.FC = () => {
     const allAvailableColumns = sortedMetadata
         .filter(col => !col.isPrimaryKey && !col.isAutoIncrement);
 
-    // Initialize visible columns when metadata loads
+    // Initialize visible columns when metadata and config are loaded
     useEffect(() => {
-        if (allAvailableColumns.length > 0 && visibleColumns.length === 0) {
-            setVisibleColumns(allAvailableColumns.map(col => col.name));
+        // Only initialize if we have metadata and columns haven't been set yet
+        if (allAvailableColumns.length === 0) return;
+
+        // Wait for both metadata and potential config to load
+        // Reset columns when table changes (visibleColumns was cleared in table switch effect)
+        if (visibleColumns.length === 0) {
+            // Use column_order from tableConfig if available
+            if (tableConfig?.column_order && Array.isArray(tableConfig.column_order) && tableConfig.column_order.length > 0) {
+                // Filter column_order to only include columns that:
+                // 1. Exist in the current metadata
+                // 2. Are not filtered out (not PK, not auto-increment)
+                const orderedColumns = tableConfig.column_order.filter((colName: string) =>
+                    allAvailableColumns.some(col => col.name === colName)
+                );
+
+                if (orderedColumns.length > 0) {
+                    setVisibleColumns(orderedColumns);
+                } else {
+                    // Config exists but no valid columns, show all
+                    setVisibleColumns(allAvailableColumns.map(col => col.name));
+                }
+            } else {
+                // No configuration, show all available columns
+                setVisibleColumns(allAvailableColumns.map(col => col.name));
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allAvailableColumns.length]);
+    }, [allAvailableColumns.length, tableConfig]);
 
     // Filter columns based on visibility selection
     const dataColumns = allAvailableColumns
